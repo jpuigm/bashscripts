@@ -1,0 +1,12 @@
+#!/bin/bash
+
+GITHUB=github.com
+BITBUCKET=bitbucket.org
+
+?SERVER=$GITHUB
+
+
+echo "Testing connectivity with $SERVER using ssh key"
+ssh -T git@$SERVER
+
+echo "Done!"
