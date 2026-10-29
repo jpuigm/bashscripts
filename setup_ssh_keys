@@ -1,17 +1,47 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# Generate an ed25519 SSH key (if missing) and load it into the ssh-agent.
+# Works on Linux and macOS (bash 3.2+).
+#
+# Usage: setup_ssh_keys [comment]   (default comment: user@host)
+set -euo pipefail
 
-echo "Setting up default identify..."
-ssh-keygen -q
+comment="${1:-$(whoami)@$(hostname -s)}"
+key="$HOME/.ssh/id_ed25519"
 
-echo "New keys have been generated..."
-ls ~/.ssh/id_rsa*
+mkdir -p "$HOME/.ssh"
+chmod 700 "$HOME/.ssh"
+
+if [ -e "$key" ]; then
+  echo "Key $key already exists, not overwriting."
+else
+  echo "Generating $key ..."
+  ssh-keygen -q -t ed25519 -a 100 -C "$comment" -f "$key"
+fi
+
+# ssh-add -l exits 2 when no agent is reachable
+rc=0
+ssh-add -l >/dev/null 2>&1 || rc=$?
+if [ "$rc" -eq 2 ]; then
+  echo "No running ssh-agent; starting one for this script only."
+  eval "$(ssh-agent -s)" >/dev/null
+  trap 'ssh-agent -k >/dev/null' EXIT
+fi
 
 echo "Adding key to the ssh-agent..."
-eval `ssh-agent`
-ssh-add ~/.ssh/id_rsa
+if [ "$(uname -s)" = "Darwin" ]; then
+  ssh-add --apple-use-keychain "$key" 2>/dev/null || ssh-add -K "$key"
+  cat <<'MSG'
 
-echo "Done!"
+macOS: to persist the key across reboots, make sure ~/.ssh/config has:
+  Host *
+    AddKeysToAgent yes
+    UseKeychain yes
+    IdentityFile ~/.ssh/id_ed25519
+MSG
+else
+  ssh-add "$key"
+fi
 
-echo ""
-cat ~/.ssh/id_rsa.pub
-
+echo
+echo "Public key (add it to GitHub/Bitbucket):"
+cat "$key.pub"

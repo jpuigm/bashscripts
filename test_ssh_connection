@@ -1,12 +1,20 @@
-#!/bin/bash
+#!/usr/bin/env bash
+# Test SSH key authentication against a git host.
+#
+# Usage: test_ssh_connection [host]   (default: github.com)
+set -uo pipefail
 
-GITHUB=github.com
-BITBUCKET=bitbucket.org
+host="${1:-github.com}"
 
-?SERVER=$GITHUB
+echo "Testing SSH connectivity with $host ..."
+out="$(ssh -T -o BatchMode=yes -o ConnectTimeout=10 "git@$host" 2>&1)"
+rc=$?
+echo "$out"
 
-
-echo "Testing connectivity with $SERVER using ssh key"
-ssh -T git@$SERVER
-
-echo "Done!"
+# GitHub/Bitbucket close the session after authenticating, so ssh -T
+# exits 1 (GitHub) or 0 (Bitbucket) on success; 255 means a connection or auth failure.
+if [ "$rc" -eq 255 ]; then
+  echo "FAILED: could not authenticate with $host" >&2
+  exit 1
+fi
+echo "OK"

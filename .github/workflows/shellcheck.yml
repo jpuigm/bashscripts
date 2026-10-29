@@ -1,0 +1,23 @@
+name: shellcheck
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  lint:
+    strategy:
+      matrix:
+        os: [ubuntu-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Install shellcheck (macOS)
+        if: runner.os == 'macOS'
+        run: brew install shellcheck
+      - name: Lint scripts
+        run: shellcheck setup_ssh_keys test_ssh_connection
+      - name: Syntax check with system bash
+        run: |
+          bash -n setup_ssh_keys
+          bash -n test_ssh_connection
