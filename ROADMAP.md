@@ -16,6 +16,7 @@ Ideas for scripts to create and maintain. All should work on Linux (Ubuntu) and 
 - [ ] `bootstrap`: install baseline tools via `apt` or `brew` from one package list.
 - [ ] `dotfiles-link`: symlink dotfiles into `$HOME`, backing up existing files.
 - [ ] `doctor`: check expected tools, versions and PATH entries.
+- [ ] `mini-setup`: configure and verify the Mac mini as an always-on SSH server: `pmset` no-sleep / wake-for-network / autorestart, Remote Login enabled, Tailscale running with MagicDNS, and sshd keepalive settings. Print a client-side `~/.ssh/config` alias snippet (`ServerAliveInterval`, etc.).
 
 ## Everyday system utilities
 - [ ] `backup-home`: incremental rsync backup with excludes and dry-run.
