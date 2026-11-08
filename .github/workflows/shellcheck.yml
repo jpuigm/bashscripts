@@ -16,8 +16,9 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install shellcheck
       - name: Lint scripts
-        run: shellcheck setup_ssh_keys test_ssh_connection
+        run: shellcheck setup_ssh_keys test_ssh_connection ssh_tunnel
       - name: Syntax check with system bash
         run: |
           bash -n setup_ssh_keys
           bash -n test_ssh_connection
+          bash -n ssh_tunnel

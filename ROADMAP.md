@@ -40,3 +40,4 @@ Ideas for scripts to create and maintain. All should work on Linux (Ubuntu) and 
 ## Done
 - [x] `setup_ssh_keys`
 - [x] `test_ssh_connection`
+- [x] `ssh_tunnel`

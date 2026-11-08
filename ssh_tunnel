@@ -1,0 +1,39 @@
+#!/usr/bin/env bash
+# Forward ports from a remote host to localhost over SSH (e.g. a dev server on a remote machine).
+# Runs in the foreground; Ctrl-C closes the tunnel. Works on Linux and macOS (bash 3.2+).
+#
+# Usage: ssh_tunnel <host> [port | local:remote]...   (default port: 3000)
+#   ssh_tunnel mini                 # http://localhost:3000 -> mini:3000
+#   ssh_tunnel mini 3000 5555       # several ports
+#   ssh_tunnel mini 8080:3000       # local 8080 -> remote 3000
+set -euo pipefail
+
+die() { echo "ssh_tunnel: $*" >&2; exit 1; }
+
+[ "$#" -ge 1 ] || die "usage: ssh_tunnel <host> [port | local:remote]..."
+host="$1"
+shift
+[ "$#" -gt 0 ] || set -- 3000
+
+args=()
+for spec in "$@"; do
+  local_port="${spec%%:*}"
+  remote_port="${spec#*:}"
+  for p in "$local_port" "$remote_port"; do
+    case "$p" in
+      ''|*[!0-9]*) die "invalid port spec '$spec' (expected PORT or LOCAL:REMOTE)" ;;
+    esac
+  done
+  if lsof -nP -iTCP:"$local_port" -sTCP:LISTEN >/dev/null 2>&1; then
+    die "local port $local_port is already in use"
+  fi
+  args+=(-L "$local_port:localhost:$remote_port")
+  echo "http://localhost:$local_port -> $host:$remote_port"
+done
+
+echo "Tunnel to $host up (Ctrl-C to close)..."
+exec ssh -N \
+  -o ExitOnForwardFailure=yes \
+  -o ServerAliveInterval=30 \
+  -o ServerAliveCountMax=3 \
+  "${args[@]}" "$host"
