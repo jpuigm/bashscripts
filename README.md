@@ -5,7 +5,7 @@ Small, portable (Linux + macOS, bash 3.2+) helper scripts.
 | Script | Purpose |
 | --- | --- |
 | `setup_ssh_keys [comment]` | Create an ed25519 key if missing and load it into the ssh-agent (uses the macOS keychain on Darwin). |
-| `test_ssh_connection [host]` | Check SSH auth against a git host (default `github.com`). |
+| `test_ssh_connection [host ...]` | Check SSH auth against git hosts (default `github.com`; shortcuts `github`, `bitbucket`, `gitlab`, or `all`). |
 | `ssh_tunnel <host> [port \| local:remote]...` | Forward remote ports to localhost over SSH (default `3000`), e.g. to view a remote dev server in a local browser. |
 
 ## Roadmap

@@ -1,20 +1,42 @@
 #!/usr/bin/env bash
-# Test SSH key authentication against a git host.
+# Test SSH key authentication against one or more git hosts.
 #
-# Usage: test_ssh_connection [host]   (default: github.com)
+# Usage: test_ssh_connection [host ...]   (default: github.com)
+#   Shortcuts: github -> github.com, bitbucket -> bitbucket.org, gitlab -> gitlab.com
+#   "all" tests github, bitbucket and gitlab.
+# Exits 0 only if every host authenticated.
 set -uo pipefail
 
-host="${1:-github.com}"
+resolve() {
+  case "$1" in
+    github)    echo github.com ;;
+    bitbucket) echo bitbucket.org ;;
+    gitlab)    echo gitlab.com ;;
+    *)         echo "$1" ;;
+  esac
+}
 
-echo "Testing SSH connectivity with $host ..."
-out="$(ssh -T -o BatchMode=yes -o ConnectTimeout=10 "git@$host" 2>&1)"
-rc=$?
-echo "$out"
+[ "$#" -eq 0 ] && set -- github.com
+if [ "$1" = "all" ]; then set -- github bitbucket gitlab; fi
 
-# GitHub/Bitbucket close the session after authenticating, so ssh -T
-# exits 1 (GitHub) or 0 (Bitbucket) on success; 255 means a connection or auth failure.
-if [ "$rc" -eq 255 ]; then
-  echo "FAILED: could not authenticate with $host" >&2
-  exit 1
-fi
-echo "OK"
+failed=0
+for arg in "$@"; do
+  host="$(resolve "$arg")"
+  echo "Testing SSH connectivity with $host ..."
+  out="$(ssh -T -o BatchMode=yes -o ConnectTimeout=10 "git@$host" 2>&1)"
+  rc=$?
+  echo "$out"
+
+  # Git hosts close the session after authenticating, so ssh -T exits
+  # 0 or 1 on success; 255 means a connection or auth failure.
+  # Bitbucket also reports "Permission denied" with 255, so rc covers it.
+  if [ "$rc" -eq 255 ]; then
+    echo "FAILED: could not authenticate with $host" >&2
+    failed=1
+  else
+    echo "OK: $host"
+  fi
+  echo
+done
+
+exit "$failed"
